@@ -1,5 +1,4 @@
-public class Paciente {
-    public String nome;
+public class Paciente extends Pessoa{
     public String cpf;
     public int idade;
     public String telefone;
@@ -7,7 +6,7 @@ public class Paciente {
     public boolean ativo;
 
     public Paciente(String nome, String cpf) {
-        this.nome = nome;
+        super(nome);
         this.cpf = cpf;
         this.idade = 0;
         this.telefone = "";
@@ -16,7 +15,7 @@ public class Paciente {
     }
 
     public Paciente(String nome, String cpf, int idade, String telefone) {
-        this.nome = nome;
+        super(nome);
         this.cpf = cpf;
         this.idade = idade;
         this.telefone = telefone;
@@ -24,9 +23,9 @@ public class Paciente {
         this.ativo = true;
     }
 
-    // construtor com todos os dados
-    public Paciente(String nome, String cpf, int idade, String telefone, String convenioNome) {
-        this.nome = nome;
+    public Paciente(String nome, String cpf, int idade,
+                    String telefone, String convenioNome) {
+        super(nome);
         this.cpf = cpf;
         this.idade = idade;
         this.telefone = telefone;
@@ -34,13 +33,11 @@ public class Paciente {
         this.ativo = true;
     }
 
-    // atualiza so idade e telefone
     public void complementar(int idade, String telefone) {
         this.idade = idade;
         this.telefone = telefone;
     }
 
-    // atualiza tudo incluindo convenio
     public void complementar(int idade, String telefone, String convenioNome) {
         this.idade = idade;
         this.telefone = telefone;
@@ -51,13 +48,19 @@ public class Paciente {
         this.ativo = false;
     }
 
+    @Override
     public String exibirResumo() {
         String status = "Sim";
+
         if (!ativo) {
             status = "Nao";
         }
-        return "Nome: " + nome + " | CPF: " + cpf + " | Idade: " + idade
-                + " | Tel: " + telefone + " | Convenio: " + convenioNome
+
+        return "Nome: " + nome
+                + " | CPF: " + cpf
+                + " | Idade: " + idade
+                + " | Tel: " + telefone
+                + " | Convenio: " + convenioNome
                 + " | Ativo: " + status;
     }
 }
