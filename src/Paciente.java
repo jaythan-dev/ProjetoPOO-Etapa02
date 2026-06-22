@@ -1,9 +1,9 @@
-public class Paciente extends Pessoa{
-    public String cpf;
-    public int idade;
-    public String telefone;
-    public String convenioNome;
-    public boolean ativo;
+public class Paciente extends Pessoa {
+    private String cpf;
+    private int idade;
+    private String telefone;
+    private String convenioNome;
+    private boolean ativo;
 
     public Paciente(String nome, String cpf) {
         super(nome);
@@ -23,8 +23,7 @@ public class Paciente extends Pessoa{
         this.ativo = true;
     }
 
-    public Paciente(String nome, String cpf, int idade,
-                    String telefone, String convenioNome) {
+    public Paciente(String nome, String cpf, int idade, String telefone, String convenioNome) {
         super(nome);
         this.cpf = cpf;
         this.idade = idade;
@@ -33,6 +32,32 @@ public class Paciente extends Pessoa{
         this.ativo = true;
     }
 
+    // getters e setters
+    public String getCpf() {
+        return cpf;
+    }
+
+    public int getIdade() {
+        return idade;
+    }
+
+    public String getTelefone() {
+        return telefone;
+    }
+
+    public String getConvenioNome() {
+        return convenioNome;
+    }
+
+    public boolean isAtivo() {
+        return ativo;
+    }
+
+    public void setAtivo(boolean ativo) {
+        this.ativo = ativo;
+    }
+
+    // regras de negócio
     public void complementar(int idade, String telefone) {
         this.idade = idade;
         this.telefone = telefone;
@@ -50,13 +75,9 @@ public class Paciente extends Pessoa{
 
     @Override
     public String exibirResumo() {
-        String status = "Sim";
+        String status = ativo ? "Sim" : "Nao";
 
-        if (!ativo) {
-            status = "Nao";
-        }
-
-        return "Nome: " + nome
+        return "Nome: " + getNome()
                 + " | CPF: " + cpf
                 + " | Idade: " + idade
                 + " | Tel: " + telefone
