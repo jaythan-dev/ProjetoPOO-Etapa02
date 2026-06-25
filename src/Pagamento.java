@@ -1,8 +1,21 @@
 public class Pagamento {
-    public int indiceConsulta;
-    public double valorFinal;
-    public String tipoPagamento;
-    public int parcelas;
+    private int indiceConsulta;
+    private double valorFinal;
+    private String tipoPagamento;
+    private int parcelas;
+
+    public int getIndiceConsulta(){
+        return indiceConsulta;
+    }
+    public double getValorFinal(){
+        return valorFinal;
+    }
+    public String getTipoPagamento(){
+        return tipoPagamento;
+    }
+    public int getParcelas(){
+        return parcelas;
+    }
 
     public Pagamento(int indiceConsulta, double valorFinal, String tipoPagamento) {
         this.indiceConsulta = indiceConsulta;

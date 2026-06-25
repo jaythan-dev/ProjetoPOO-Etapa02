@@ -33,6 +33,18 @@ public class Paciente extends Pessoa {
     }
 
     // getters e setters
+    public void setCpf(String cpf){
+        this.cpf = cpf;
+    }
+    public void setIdade(int idade){
+        this.idade = idade;
+    }
+    public void setTelefone(String telefone){
+        this.telefone = telefone;
+    }
+    public void setConvenio(String convenio){
+        this.convenioNome = convenio;
+    }
     public String getCpf() {
         return cpf;
     }

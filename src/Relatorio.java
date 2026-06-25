@@ -1,79 +1,73 @@
+import java.util.List;
+
 public class Relatorio {
 
     // mostra todas as consultas
-    public static void gerarRelatorio(Consulta[] consultas, int totalConsultas,
-                                      Atendimento[] atendimentos, int totalAtendimentos) {
+    public static void gerarRelatorio(List<Consulta> consultas,
+                                       List<Atendimento> atendimentos) {
+
         System.out.println("\n=== RELATORIO GERAL ===");
-        for (int i = 0; i < totalConsultas; i++) {
-            System.out.println(consultas[i].exibirResumo());
-            // verifica se tem diagnostico
-            String diag = buscarDiagnostico(i, atendimentos, totalAtendimentos);
-            if (!diag.equals("")) {
-                System.out.println("  Diagnostico: " + diag);
-            }
-            System.out.println("---");
+
+        for (Consulta consulta : consultas) {
+            imprimirConsultaComDiagnostico(consulta, atendimentos);
         }
     }
 
     // filtra por profissional
-    public static void gerarRelatorio(Consulta[] consultas, int totalConsultas,
-                                      Atendimento[] atendimentos, int totalAtendimentos,
-                                      String nomeProfissional) {
+    public static void gerarRelatorio(List<Consulta> consultas,
+                                       List<Atendimento> atendimentos,
+                                       String nomeProfissional) {
+
         System.out.println("\n=== RELATORIO - " + nomeProfissional + " ===");
         boolean achou = false;
-        for (int i = 0; i < totalConsultas; i++) {
-            if (consultas[i].nomeProfissional.equals(nomeProfissional)) {
-                System.out.println(consultas[i].exibirResumo());
-                String diag = buscarDiagnostico(i, atendimentos, totalAtendimentos);
-                if (!diag.equals("")) {
-                    System.out.println("  Diagnostico: " + diag);
-                }
-                System.out.println("---");
+
+        for (Consulta consulta : consultas) {
+            if (consulta.getNomeProfissional().equals(nomeProfissional)) {
+                imprimirConsultaComDiagnostico(consulta, atendimentos);
                 achou = true;
             }
         }
+
         if (!achou) {
             System.out.println("Nenhuma consulta encontrada para esse profissional.");
         }
     }
 
     // filtra por periodo (data inicio e fim)
-    public static void gerarRelatorio(Consulta[] consultas, int totalConsultas,
-                                      Atendimento[] atendimentos, int totalAtendimentos,
-                                      String dataInicio, String dataFim) {
+    public static void gerarRelatorio(List<Consulta> consultas,
+                                       List<Atendimento> atendimentos,
+                                       String dataInicio, String dataFim) {
+
         System.out.println("\n=== RELATORIO - " + dataInicio + " a " + dataFim + " ===");
-        for (int i = 0; i < totalConsultas; i++) {
-            if (estaNoIntervalo(consultas[i].data, dataInicio, dataFim)) {
-                System.out.println(consultas[i].exibirResumo());
-                String diag = buscarDiagnostico(i, atendimentos, totalAtendimentos);
-                if (!diag.equals("")) {
-                    System.out.println("  Diagnostico: " + diag);
-                }
-                System.out.println("---");
+
+        for (Consulta consulta : consultas) {
+            if (estaNoIntervalo(consulta.getData(), dataInicio, dataFim)) {
+                imprimirConsultaComDiagnostico(consulta, atendimentos);
             }
         }
     }
 
     // resumo financeiro do dia
-    public static void gerarResumoFinanceiro(Consulta[] consultas, int totalConsultas,
-                                             Pagamento[] pagamentos, int totalPagamentos,
-                                             double[] multas, int totalMultas) {
+    public static void gerarResumoFinanceiro(List<Consulta> consultas,
+                                              List<Pagamento> pagamentos,
+                                              List<Double> multas) {
+
         int realizadas = 0;
         int canceladas = 0;
         double totalFaturado = 0;
         double totalEmMultas = 0;
 
-        for (int i = 0; i < totalConsultas; i++) {
-            if (consultas[i].status.equals("realizada")) realizadas++;
-            if (consultas[i].status.equals("cancelada")) canceladas++;
+        for (Consulta consulta : consultas) {
+            if (consulta.isConcluida()) realizadas++;
+            if ("cancelada".equals(consulta.getStatus())) canceladas++;
         }
 
-        for (int i = 0; i < totalPagamentos; i++) {
-            totalFaturado = totalFaturado + pagamentos[i].valorFinal;
+        for (Pagamento pagamento : pagamentos) {
+            totalFaturado = totalFaturado + pagamento.getValorFinal();
         }
 
-        for (int i = 0; i < totalMultas; i++) {
-            totalEmMultas = totalEmMultas + multas[i];
+        for (double multa : multas) {
+            totalEmMultas = totalEmMultas + multa;
         }
 
         System.out.println("\n=== RESUMO FINANCEIRO ===");
@@ -83,14 +77,30 @@ public class Relatorio {
         System.out.println("Total em multas: R$" + Math.round(totalEmMultas * 100.0) / 100.0);
     }
 
-    // busca diagnostico de um atendimento pelo indice da consulta
-    public static String buscarDiagnostico(int indiceConsulta, Atendimento[] atendimentos, int total) {
-        for (int i = 0; i < total; i++) {
-            if (atendimentos[i].indiceConsulta == indiceConsulta) {
-                return atendimentos[i].diagnostico;
+    // imprime a consulta e, se houver, o diagnostico do atendimento ligado a ela
+    private static void imprimirConsultaComDiagnostico(Consulta consulta, List<Atendimento> atendimentos) {
+
+        System.out.println(consulta.exportarDados());
+
+        String diag = buscarDiagnostico(consulta, atendimentos);
+
+        if (diag != null && !diag.isBlank()) {
+            System.out.println("  Diagnostico: " + diag);
+        }
+
+        System.out.println("---");
+    }
+
+    // busca o diagnostico do atendimento ligado a essa consulta
+    public static String buscarDiagnostico(Consulta consulta, List<Atendimento> atendimentos) {
+
+        for (Atendimento atendimento : atendimentos) {
+            if (atendimento.getConsulta() == consulta) {
+                return atendimento.getDiagnostico();
             }
         }
-        return "";
+
+        return null;
     }
 
     // compara datas convertendo pra numero inteiro (AAAAMMDD)

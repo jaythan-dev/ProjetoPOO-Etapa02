@@ -1,17 +1,19 @@
+import java.util.ArrayList;
+import java.util.List;
+
 public class Profissional extends Pessoa {
-    public String especialidade;
-    public String registroProfissional;
-    public double valorConsulta;
-    public String[] diasDisponiveis;
-    public int totalDias;
+
+    private String especialidade;
+    private String registroProfissional;
+    private double valorConsulta;
+    private List<String> diasDisponiveis;
 
     public Profissional(String nome, String especialidade) {
         super(nome);
         this.especialidade = especialidade;
         this.registroProfissional = "";
         this.valorConsulta = 0;
-        this.diasDisponiveis = new String[7];
-        this.totalDias = 0;
+        this.diasDisponiveis = new ArrayList<>();
     }
 
     public Profissional(String nome, String especialidade,
@@ -21,47 +23,53 @@ public class Profissional extends Pessoa {
         this.especialidade = especialidade;
         this.registroProfissional = registroProfissional;
         this.valorConsulta = valorConsulta;
-        this.diasDisponiveis = new String[7];
-        this.totalDias = 0;
+        this.diasDisponiveis = new ArrayList<>();
     }
 
     public Profissional(String nome, String especialidade,
                         String registroProfissional,
                         double valorConsulta,
-                        String[] dias,
-                        int totalDias) {
+                        List<String> dias) {
         super(nome);
-
         this.especialidade = especialidade;
         this.registroProfissional = registroProfissional;
         this.valorConsulta = valorConsulta;
-        this.diasDisponiveis = new String[7];
-        this.totalDias = totalDias;
-
-        for (int i = 0; i < totalDias; i++) {
-            this.diasDisponiveis[i] = dias[i];
-        }
+        this.diasDisponiveis = new ArrayList<>(dias);
     }
 
+    // getters
+    public String getEspecialidade() {
+        return especialidade;
+    }
+
+    public String getRegistroProfissional() {
+        return registroProfissional;
+    }
+
+    public double getValorConsulta() {
+        return valorConsulta;
+    }
+
+    public int getTotalDias() {
+        return diasDisponiveis.size();
+    }
+
+    // setters controlados
     public void atualizar(String registro, double valor) {
         this.registroProfissional = registro;
         this.valorConsulta = valor;
     }
 
-    public void atualizar(String registro, double valor,
-                          String[] dias, int totalDias) {
+    public void atualizar(String registro, double valor, List<String> dias) {
         this.registroProfissional = registro;
         this.valorConsulta = valor;
-        this.totalDias = totalDias;
-
-        for (int i = 0; i < totalDias; i++) {
-            this.diasDisponiveis[i] = dias[i];
-        }
+        diasDisponiveis.clear();
+        diasDisponiveis.addAll(dias);
     }
 
     public boolean atendeNoDia(String dia) {
-        for (int i = 0; i < totalDias; i++) {
-            if (diasDisponiveis[i].equals(dia)) {
+        for (String diaDisponivel : diasDisponiveis) {
+            if (diaDisponivel.equals(dia)) {
                 return true;
             }
         }
@@ -69,26 +77,22 @@ public class Profissional extends Pessoa {
     }
 
     public static boolean especialidadeValida(String esp) {
-        if (esp.equals("clinica geral")) return true;
-        if (esp.equals("fisioterapia")) return true;
-        if (esp.equals("psicologia")) return true;
-        if (esp.equals("nutricao")) return true;
-        return false;
+        return esp.equals("clinica geral")
+                || esp.equals("fisioterapia")
+                || esp.equals("psicologia")
+                || esp.equals("nutricao");
     }
 
     @Override
     public String exibirResumo() {
         String dias = "";
 
-        for (int i = 0; i < totalDias; i++) {
-            if (i > 0) {
-                dias += ", ";
-            }
-
-            dias += diasDisponiveis[i];
+        for (int i = 0; i < diasDisponiveis.size(); i++) {
+            if (i > 0) dias += ", ";
+            dias += diasDisponiveis.get(i);
         }
 
-        return "Nome: " + nome
+        return "Nome: " + getNome()
                 + " | Espec: " + especialidade
                 + " | Reg: " + registroProfissional
                 + " | Valor: R$" + valorConsulta
