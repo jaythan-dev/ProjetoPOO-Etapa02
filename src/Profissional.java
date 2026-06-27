@@ -1,40 +1,43 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class Profissional extends Pessoa {
+public abstract class Profissional extends Pessoa {
 
     private String especialidade;
     private String registroProfissional;
     private double valorConsulta;
-    private List<String> diasDisponiveis;
 
-    public Profissional(String nome, String especialidade) {
-        super(nome);
+    // AGREGAÇÃO: Profissional possui horários, mas os horários sobrevivem
+    // independentemente do profissional (podem ser reaproveitados por outro)
+    private List<HorarioDisponivel> horariosDisponiveis;
+
+    protected Profissional(String nome, String cpf, String especialidade) {
+        super(nome, cpf);
         this.especialidade = especialidade;
         this.registroProfissional = "";
         this.valorConsulta = 0;
-        this.diasDisponiveis = new ArrayList<>();
+        this.horariosDisponiveis = new ArrayList<>();
     }
 
-    public Profissional(String nome, String especialidade,
+    protected Profissional(String nome, String cpf, String especialidade,
                         String registroProfissional,
                         double valorConsulta) {
-        super(nome);
+        super(nome, cpf);
         this.especialidade = especialidade;
         this.registroProfissional = registroProfissional;
         this.valorConsulta = valorConsulta;
-        this.diasDisponiveis = new ArrayList<>();
+        this.horariosDisponiveis = new ArrayList<>();
     }
 
-    public Profissional(String nome, String especialidade,
+    protected Profissional(String nome, String cpf, String especialidade,
                         String registroProfissional,
                         double valorConsulta,
-                        List<String> dias) {
-        super(nome);
+                        List<HorarioDisponivel> horarios) {
+        super(nome, cpf);
         this.especialidade = especialidade;
         this.registroProfissional = registroProfissional;
         this.valorConsulta = valorConsulta;
-        this.diasDisponiveis = new ArrayList<>(dias);
+        this.horariosDisponiveis = new ArrayList<>(horarios);
     }
 
     // getters
@@ -51,7 +54,11 @@ public class Profissional extends Pessoa {
     }
 
     public int getTotalDias() {
-        return diasDisponiveis.size();
+        return horariosDisponiveis.size();
+    }
+
+    public List<HorarioDisponivel> getHorariosDisponiveis() {
+        return horariosDisponiveis;
     }
 
     // setters controlados
@@ -60,42 +67,52 @@ public class Profissional extends Pessoa {
         this.valorConsulta = valor;
     }
 
-    public void atualizar(String registro, double valor, List<String> dias) {
+    public void atualizar(String registro, double valor, List<HorarioDisponivel> horarios) {
         this.registroProfissional = registro;
         this.valorConsulta = valor;
-        diasDisponiveis.clear();
-        diasDisponiveis.addAll(dias);
+        horariosDisponiveis.clear();
+        horariosDisponiveis.addAll(horarios);
     }
 
-    public boolean atendeNoDia(String dia) {
-        for (String diaDisponivel : diasDisponiveis) {
-            if (diaDisponivel.equals(dia)) {
+    /**
+     * Verifica se o profissional atende no dia E no turno informados
+     * (ex: atende segunda, mas só de manhã — não deve aceitar agendamento
+     * de segunda à tarde).
+     */
+    public boolean atendeNoDiaETurno(String dia, String turno) {
+        for (HorarioDisponivel h : horariosDisponiveis) {
+            if (h.getDiaSemana().equals(dia) && h.getTurno().equals(turno)) {
                 return true;
             }
         }
         return false;
     }
 
-    public static boolean especialidadeValida(String esp) {
-        return esp.equals("clinica geral")
-                || esp.equals("fisioterapia")
-                || esp.equals("psicologia")
-                || esp.equals("nutricao");
+    // Método protegido: cálculo auxiliar interno, só as subclasses precisam dele
+    // (modificador de acesso com propósito: nenhuma classe externa usa isso)
+    protected String formatarHorarios() {
+        String dias = "";
+        for (int i = 0; i < horariosDisponiveis.size(); i++) {
+            if (i > 0) dias += ", ";
+            dias += horariosDisponiveis.get(i);
+        }
+        return dias;
     }
+
+    /**
+     * Cada especialidade registra, à sua maneira, as informações específicas
+     * do atendimento (ex: sessões previstas, abordagem, plano alimentar,
+     * encaminhamento) no prontuário do atendimento informado.
+     */
+    public abstract void registrarEspecifico(Atendimento atendimento);
 
     @Override
     public String exibirResumo() {
-        String dias = "";
-
-        for (int i = 0; i < diasDisponiveis.size(); i++) {
-            if (i > 0) dias += ", ";
-            dias += diasDisponiveis.get(i);
-        }
-
         return "Nome: " + getNome()
+                + " | CPF: " + getCpf()
                 + " | Espec: " + especialidade
                 + " | Reg: " + registroProfissional
                 + " | Valor: R$" + valorConsulta
-                + " | Dias: " + dias;
+                + " | Dias: " + formatarHorarios();
     }
 }

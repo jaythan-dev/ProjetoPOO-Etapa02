@@ -1,64 +1,49 @@
 public class Paciente extends Pessoa {
-    private String cpf;
+
     private int idade;
-    private String telefone;
-    private String convenioNome;
+    private Convenio convenio; // ASSOCIAÇÃO: Paciente conhece Convenio, mas ambos existem independentemente
     private boolean ativo;
 
     public Paciente(String nome, String cpf) {
-        super(nome);
-        this.cpf = cpf;
+        super(nome, cpf);
         this.idade = 0;
-        this.telefone = "";
-        this.convenioNome = "";
         this.ativo = true;
     }
 
     public Paciente(String nome, String cpf, int idade, String telefone) {
-        super(nome);
-        this.cpf = cpf;
+        super(nome, cpf);
         this.idade = idade;
-        this.telefone = telefone;
-        this.convenioNome = "";
+        setTelefone(telefone);
         this.ativo = true;
     }
 
-    public Paciente(String nome, String cpf, int idade, String telefone, String convenioNome) {
-        super(nome);
-        this.cpf = cpf;
+    public Paciente(String nome, String cpf, int idade, String telefone, Convenio convenio) {
+        super(nome, cpf);
         this.idade = idade;
-        this.telefone = telefone;
-        this.convenioNome = convenioNome;
+        setTelefone(telefone);
+        this.convenio = convenio;
         this.ativo = true;
     }
 
     // getters e setters
-    public void setCpf(String cpf){
-        this.cpf = cpf;
-    }
-    public void setIdade(int idade){
+    public void setIdade(int idade) {
         this.idade = idade;
     }
-    public void setTelefone(String telefone){
-        this.telefone = telefone;
-    }
-    public void setConvenio(String convenio){
-        this.convenioNome = convenio;
-    }
-    public String getCpf() {
-        return cpf;
+
+    public void setConvenio(Convenio convenio) {
+        this.convenio = convenio;
     }
 
     public int getIdade() {
         return idade;
     }
 
-    public String getTelefone() {
-        return telefone;
+    public Convenio getConvenio() {
+        return convenio;
     }
 
-    public String getConvenioNome() {
-        return convenioNome;
+    public boolean temConvenio() {
+        return convenio != null;
     }
 
     public boolean isAtivo() {
@@ -72,13 +57,13 @@ public class Paciente extends Pessoa {
     // regras de negócio
     public void complementar(int idade, String telefone) {
         this.idade = idade;
-        this.telefone = telefone;
+        setTelefone(telefone);
     }
 
-    public void complementar(int idade, String telefone, String convenioNome) {
+    public void complementar(int idade, String telefone, Convenio convenio) {
         this.idade = idade;
-        this.telefone = telefone;
-        this.convenioNome = convenioNome;
+        setTelefone(telefone);
+        this.convenio = convenio;
     }
 
     public void desativar() {
@@ -88,12 +73,13 @@ public class Paciente extends Pessoa {
     @Override
     public String exibirResumo() {
         String status = ativo ? "Sim" : "Nao";
+        String nomeConvenio = temConvenio() ? convenio.getNome() : "Nenhum";
 
         return "Nome: " + getNome()
-                + " | CPF: " + cpf
+                + " | CPF: " + getCpf()
                 + " | Idade: " + idade
-                + " | Tel: " + telefone
-                + " | Convenio: " + convenioNome
+                + " | Tel: " + getTelefone()
+                + " | Convenio: " + nomeConvenio
                 + " | Ativo: " + status;
     }
 }

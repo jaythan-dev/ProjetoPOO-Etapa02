@@ -100,16 +100,18 @@ public class ClinicaServico {
 
     /**
      * Procura, entre os profissionais de uma especialidade, o primeiro que
-     * tenha valor de consulta definido, atenda no dia da semana informado
-     * e esteja livre no horário pedido.
+     * tenha valor de consulta definido, atenda no dia da semana E no turno
+     * do horário pedido, e esteja livre nesse horário.
      */
     public Profissional buscarProfissionalDisponivel(String especialidade, String diaSemana,
                                                       String data, String horario) {
 
+        String turno = HorarioDisponivel.turnoDoHorario(horario);
+
         for (Profissional p : profissionaisPorNome.values()) {
             if (p.getEspecialidade().equals(especialidade)
                     && p.getValorConsulta() > 0
-                    && p.atendeNoDia(diaSemana)
+                    && p.atendeNoDiaETurno(diaSemana, turno)
                     && !temConflito(p.getNome(), data, horario)) {
                 return p;
             }
@@ -309,13 +311,25 @@ public class ClinicaServico {
         return false;
     }
 
-    public String sugerirHorario(String nomeProfissional, String data) {
+    /**
+     * Sugere um horário livre dentro do turno em que o profissional realmente
+     * atende naquele dia (manha ou tarde), evitando sugerir um horário fora
+     * da disponibilidade cadastrada.
+     */
+    public String sugerirHorario(String nomeProfissional, String data, String diaSemana) {
+
+        Profissional profissional = buscarProfissional(nomeProfissional);
+        if (profissional == null) {
+            return "";
+        }
 
         for (int hora = 8; hora <= 18; hora++) {
 
             String horario = (hora < 10) ? "0" + hora + ":00" : hora + ":00";
+            String turno = HorarioDisponivel.turnoDoHorario(horario);
 
-            if (!temConflito(nomeProfissional, data, horario)) {
+            if (profissional.atendeNoDiaETurno(diaSemana, turno)
+                    && !temConflito(nomeProfissional, data, horario)) {
                 return horario;
             }
         }
