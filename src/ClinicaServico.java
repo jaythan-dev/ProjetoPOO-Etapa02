@@ -2,10 +2,13 @@ import java.util.*;
 
 public class ClinicaServico {
 
-    // ====================
-    // ESTRUTURAS (REVISADAS)
-    // ====================
-
+    // ArrayList<Consulta>/Atendimento/Pagamento: ordem de inserção importa e
+    // acesso por índice é necessário (relatórios e operações referenciam consultas
+    // pelo índice digitado pelo usuário)
+    // HashMap<String, Paciente>/<String, Profissional>: busca por chave (CPF
+    // ou nome) é a operação mais frequente aqui (agendar, pagar, atualizar
+    // sempre partem de um identificador conhecido) — muito mais eficiente
+    // que percorrer uma lista inteira a cada busca
     private Map<String, Paciente> pacientesPorCpf;
     private Map<String, Profissional> profissionaisPorNome;
 
@@ -13,6 +16,8 @@ public class ClinicaServico {
     private List<Atendimento> atendimentos;
     private List<Pagamento> pagamentos;
 
+    // HashSet<String>: só precisamos verificar existência (contains) de CPFs
+    // já cadastrados; não importa ordem nem temos acesso indexado
     private Set<String> cpfsCadastrados;
     private List<Double> multas;
 
@@ -44,19 +49,19 @@ public class ClinicaServico {
         return true;
     }
 
-    public Paciente buscarPaciente(String cpf) {
-        return pacientesPorCpf.get(cpf);
-    }
-
-    public boolean desativarPaciente(String cpf) {
-        Paciente paciente = buscarPaciente(cpf);
+    public Paciente buscarPaciente(String cpf) throws PacienteNaoEncontradoException {
+        Paciente paciente = pacientesPorCpf.get(cpf);
 
         if (paciente == null) {
-            return false;
+            throw new PacienteNaoEncontradoException("Paciente com CPF " + cpf + " nao encontrado.");
         }
 
+        return paciente;
+    }
+
+    public void desativarPaciente(String cpf) throws PacienteNaoEncontradoException {
+        Paciente paciente = buscarPaciente(cpf);
         paciente.desativar();
-        return true;
     }
 
     public List<Paciente> listarPacientes() {
@@ -77,8 +82,14 @@ public class ClinicaServico {
         return true;
     }
 
-    public Profissional buscarProfissional(String nome) {
-        return profissionaisPorNome.get(nome);
+    public Profissional buscarProfissional(String nome) throws ProfissionalNaoEncontradoException {
+        Profissional profissional = profissionaisPorNome.get(nome);
+
+        if (profissional == null) {
+            throw new ProfissionalNaoEncontradoException("Profissional " + nome + " nao encontrado.");
+        }
+
+        return profissional;
     }
 
     public List<Profissional> buscarPorEspecialidade(String especialidade) {
@@ -99,12 +110,26 @@ public class ClinicaServico {
     }
 
     /**
+     * Combina pacientes e profissionais numa única lista de Pessoa, para
+     * relatórios que percorrem o cadastro completo de forma polimórfica
+     * (cada Pessoa sabe exibir seu próprio resumo, seja Paciente ou alguma
+     * subclasse de Profissional).
+     */
+    public List<Pessoa> listarTodasPessoas() {
+        List<Pessoa> todas = new ArrayList<>();
+        todas.addAll(pacientesPorCpf.values());
+        todas.addAll(profissionaisPorNome.values());
+        return todas;
+    }
+
+    /**
      * Procura, entre os profissionais de uma especialidade, o primeiro que
      * tenha valor de consulta definido, atenda no dia da semana E no turno
      * do horário pedido, e esteja livre nesse horário.
      */
     public Profissional buscarProfissionalDisponivel(String especialidade, String diaSemana,
-                                                      String data, String horario) {
+                                                      String data, String horario)
+            throws HorarioIndisponivelException {
 
         String turno = HorarioDisponivel.turnoDoHorario(horario);
 
@@ -117,34 +142,37 @@ public class ClinicaServico {
             }
         }
 
-        return null;
+        throw new HorarioIndisponivelException(
+                "Nenhum profissional de " + especialidade + " disponivel nesse dia/horario.");
     }
 
     // ====================
     // CONSULTAS
     // ====================
 
-    public boolean agendarConsulta(Consulta consulta) {
+    /**
+     * Valida e agenda a consulta, lançando a exceção específica que corresponde
+     * ao motivo da falha (paciente inativo, paciente/profissional inexistente,
+     * ou horário indisponível).
+     */
+    public void agendarConsulta(Consulta consulta)
+            throws PacienteNaoEncontradoException, PacienteInativoException,
+                   ProfissionalNaoEncontradoException, HorarioIndisponivelException {
 
         Paciente paciente = buscarPaciente(consulta.getCpf());
-        if (paciente == null || !paciente.isAtivo()) {
-            return false;
+
+        if (!paciente.isAtivo()) {
+            throw new PacienteInativoException(
+                    "Paciente " + paciente.getNome() + " esta inativo. Nao e possivel agendar.");
         }
 
-        Profissional profissional = buscarProfissional(consulta.getNomeProfissional());
-        if (profissional == null) {
-            return false;
-        }
+        buscarProfissional(consulta.getNomeProfissional());
 
-        if (temConflito(
-                consulta.getNomeProfissional(),
-                consulta.getData(),
-                consulta.getHorario())) {
-            return false;
+        if (temConflito(consulta.getNomeProfissional(), consulta.getData(), consulta.getHorario())) {
+            throw new HorarioIndisponivelException("Horario ja ocupado para esse profissional.");
         }
 
         consultas.add(consulta);
-        return true;
     }
 
     /**
@@ -156,14 +184,18 @@ public class ClinicaServico {
         consultas.add(consulta);
     }
 
-    public boolean cancelarConsulta(int indice) {
+    public void cancelarConsulta(int indice) throws ConsultaNaoEncontradaException, OperacaoInvalidaException {
 
-        if (indice < 0 || indice >= consultas.size()) {
-            return false;
+        Consulta consulta = getConsulta(indice);
+
+        if (consulta.isConcluida()) {
+            throw new OperacaoInvalidaException("Consulta ja realizada. Nao pode cancelar.");
+        }
+        if ("cancelada".equals(consulta.getStatus())) {
+            throw new OperacaoInvalidaException("Consulta ja cancelada.");
         }
 
-        consultas.get(indice).cancelar();
-        return true;
+        consulta.cancelar();
     }
 
     public List<Consulta> listarConsultas() {
@@ -174,18 +206,19 @@ public class ClinicaServico {
         return consultas.size();
     }
 
-    public Consulta getConsulta(int indice) {
+    public Consulta getConsulta(int indice) throws ConsultaNaoEncontradaException {
         if (indice < 0 || indice >= consultas.size()) {
-            return null;
+            throw new ConsultaNaoEncontradaException("Consulta de indice " + indice + " nao encontrada.");
         }
         return consultas.get(indice);
     }
 
     /**
      * Procura o índice da consulta que casa com cpf, data e horário
-     * informados. Retorna -1 se não encontrar.
+     * informados.
      */
-    public int buscarIndiceConsulta(String cpf, String data, String horario) {
+    public int buscarIndiceConsulta(String cpf, String data, String horario)
+            throws ConsultaNaoEncontradaException {
 
         for (int i = 0; i < consultas.size(); i++) {
             Consulta c = consultas.get(i);
@@ -194,14 +227,16 @@ public class ClinicaServico {
             }
         }
 
-        return -1;
+        throw new ConsultaNaoEncontradaException(
+                "Consulta nao encontrada para CPF " + cpf + " em " + data + " " + horario + ".");
     }
 
     /**
      * Procura o índice de uma consulta AGENDADA que casa com cpf, data
      * e horário originais — usado na remarcação.
      */
-    public int buscarIndiceConsultaAgendada(String cpf, String data, String horario) {
+    public int buscarIndiceConsultaAgendada(String cpf, String data, String horario)
+            throws ConsultaNaoEncontradaException {
 
         for (int i = 0; i < consultas.size(); i++) {
             Consulta c = consultas.get(i);
@@ -211,7 +246,8 @@ public class ClinicaServico {
             }
         }
 
-        return -1;
+        throw new ConsultaNaoEncontradaException(
+                "Consulta agendada nao encontrada para CPF " + cpf + " em " + data + " " + horario + ".");
     }
 
     public List<Consulta> buscarConsultasPorPaciente(String cpf) {
@@ -316,12 +352,10 @@ public class ClinicaServico {
      * atende naquele dia (manha ou tarde), evitando sugerir um horário fora
      * da disponibilidade cadastrada.
      */
-    public String sugerirHorario(String nomeProfissional, String data, String diaSemana) {
+    public String sugerirHorario(String nomeProfissional, String data, String diaSemana)
+            throws ProfissionalNaoEncontradoException {
 
         Profissional profissional = buscarProfissional(nomeProfissional);
-        if (profissional == null) {
-            return "";
-        }
 
         for (int hora = 8; hora <= 18; hora++) {
 
