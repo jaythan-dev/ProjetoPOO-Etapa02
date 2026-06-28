@@ -2,8 +2,8 @@ public interface Agendavel {
 
     void agendar();
 
-    void cancelar();
+    void cancelar() throws OperacaoInvalidaException;
 
-    void remarcar(String novaData, String novoHorario);
+    void remarcar(String novaData, String novoHorario) throws OperacaoInvalidaException;
 
 }
