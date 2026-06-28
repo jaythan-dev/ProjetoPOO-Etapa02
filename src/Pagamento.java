@@ -29,6 +29,22 @@ public abstract class Pagamento implements Exportavel {
         return "Consulta #" + indiceConsulta
                 + " | Valor: R$" + valorArredondado
                 + " | Tipo: " + getTipoDescricao();
+<<<<<<< HEAD
+=======
+    }
+
+    protected abstract String getTipoDescricao();
+
+    @Override
+    public String exportarDados() {
+        double valorArredondado = Math.round(calcularValorFinal() * 100.0) / 100.0;
+        return "Pagamento{" +
+                "indiceConsulta=" + indiceConsulta +
+                ", valorBase=" + valorBase +
+                ", valorFinal=" + valorArredondado +
+                ", tipo='" + getTipoDescricao() + '\'' +
+                '}';
+>>>>>>> 206b5a265d560a31c7494c378367c79c7a23af23
     }
 
     protected abstract String getTipoDescricao();

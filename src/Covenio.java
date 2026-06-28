@@ -39,15 +39,15 @@ public class Convenio {
     private static final List<String> TODAS_ESPECIALIDADES =
             List.of("clinica geral", "fisioterapia", "psicologia", "nutricao");
 
-    public static Covenio saudePlus() {
-        return new Covenio("SaudePlus", 40, TODAS_ESPECIALIDADES);
+    public static Convenio saudePlus() {
+        return new Convenio("SaudePlus", 40, TODAS_ESPECIALIDADES);
     }
 
-    public static Covenio vidaMais() {
-        return new Covenio("VidaMais", 30, TODAS_ESPECIALIDADES);
+    public static Convenio vidaMais() {
+        return new Convenio("VidaMais", 30, TODAS_ESPECIALIDADES);
     }
 
-    public static Covenio bemEstar() {
-        return new Covenio("BemEstar", 50, TODAS_ESPECIALIDADES);
+    public static Convenio bemEstar() {
+        return new Convenio("BemEstar", 50, TODAS_ESPECIALIDADES);
     }
 }
