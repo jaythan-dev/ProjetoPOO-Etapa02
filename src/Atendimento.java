@@ -1,89 +1,83 @@
-import java.util.ArrayList;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
-public class Atendimento {
+public class Atendimento implements Exportavel {
+
+    private static final DateTimeFormatter FORMATO_DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
     private Consulta consulta;
-    private String observacoes;
-    private String diagnostico;
-    private ArrayList<String> procedimentos;
+    private Prontuario prontuario; // COMPOSIÇÃO: o prontuário nasce e morre com o atendimento
 
     // registro basico - so observacoes
     public Atendimento(Consulta consulta, String observacoes) {
         this.consulta = consulta;
-        this.observacoes = observacoes;
-        this.diagnostico = "";
-        this.procedimentos = new ArrayList<>();
+        this.prontuario = new Prontuario(observacoes, "", dataDeHoje());
     }
 
     public Atendimento(Consulta consulta, String observacoes, String diagnostico) {
         this.consulta = consulta;
-        this.observacoes = observacoes;
-        this.diagnostico = diagnostico;
-        this.procedimentos = new ArrayList<>();
+        this.prontuario = new Prontuario(observacoes, diagnostico, dataDeHoje());
     }
 
     // registro completo com procedimentos ja definidos
     public Atendimento(Consulta consulta, String observacoes, String diagnostico,
-                       String[] procedimentos) {
+                       String[] procedimentos, int quantidade) {
         this.consulta = consulta;
-        this.observacoes = observacoes;
-        this.diagnostico = diagnostico;
-        this.procedimentos = new ArrayList<>();
-        for (int i = 0; i < procedimentos.length; i++) {
-            this.procedimentos.add(procedimentos[i]);
-        }
+        this.prontuario = new Prontuario(observacoes, diagnostico, dataDeHoje());
+        this.prontuario.adicionarProcedimentos(procedimentos, quantidade);
+    }
+
+    private static String dataDeHoje() {
+        return LocalDate.now().format(FORMATO_DATA);
     }
 
     // adiciona um por vez
     public void adicionarProcedimento(String procedimento) {
-        if (procedimentos.size() < 10) {
-            procedimentos.add(procedimento);
-        }
+        prontuario.adicionarProcedimento(procedimento);
     }
 
     // adiciona varios de uma vez
     public void adicionarProcedimento(String[] procs, int quantidade) {
-        for (int i = 0; i < quantidade; i++) {
-            if (procedimentos.size() < 10) {
-                procedimentos.add(procs[i]);
-            }
-        }
+        prontuario.adicionarProcedimentos(procs, quantidade);
     }
-    //getters e setters 
-    public String getObservacoes(){
-        return observacoes; 
+
+    // getters
+    public String getObservacoes() {
+        return prontuario.getObservacoes();
     }
-    public String getDiagnostico(){
-        return diagnostico; 
+
+    public String getDiagnostico() {
+        return prontuario.getDiagnostico();
     }
-    public ArrayList<String> getProcedimentos(){
-        return procedimentos;
+
+    public List<String> getProcedimentos() {
+        return prontuario.getProcedimentos();
     }
-     public Consulta getConsulta(){
+
+    public Consulta getConsulta() {
         return consulta;
-    } 
-    public int getTotalProcedimentos(){
-        return procedimentos.size();  
     }
 
+    public Prontuario getProntuario() {
+        return prontuario;
+    }
 
-
+    public int getTotalProcedimentos() {
+        return prontuario.getProcedimentos().size();
+    }
 
     public String exibirResumo() {
-        String resumo = "Observacoes: " + observacoes;
+        return prontuario.exibirResumo();
+    }
 
-        if (!diagnostico.equals("")) {
-            resumo = resumo + "\nDiagnostico: " + diagnostico;
-        }
-
-        if (procedimentos.size() > 0) {
-            resumo = resumo + "\nProcedimentos: ";
-            for (int i = 0; i < procedimentos.size(); i++) {
-                resumo = resumo + procedimentos.get(i);
-                if (i < procedimentos.size() - 1) {
-                    resumo = resumo + ", ";
-                }
-            }
-        }
-        return resumo;
+    @Override
+    public String exportarDados() {
+        return "Atendimento{" +
+                "consulta='" + consulta.getCpf() + " - " + consulta.getData() + " " + consulta.getHorario() + '\'' +
+                ", observacoes='" + getObservacoes() + '\'' +
+                ", diagnostico='" + getDiagnostico() + '\'' +
+                ", totalProcedimentos=" + getTotalProcedimentos() +
+                '}';
     }
 }

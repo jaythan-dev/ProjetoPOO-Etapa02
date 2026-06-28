@@ -105,9 +105,9 @@ public class Consulta implements Agendavel, Exportavel {
     }
 
     @Override
-    public void cancelar() {
+    public void cancelar() throws OperacaoInvalidaException {
         if ("concluida".equals(status)) {
-            throw new IllegalStateException("Consulta já realizada não pode ser cancelada");
+            throw new OperacaoInvalidaException("Consulta já realizada não pode ser cancelada");
         }
         this.status = "cancelada";
     }
@@ -116,7 +116,7 @@ public class Consulta implements Agendavel, Exportavel {
      * Cancela a consulta registrando um motivo e devolve uma mensagem
      * de confirmação pronta para exibição.
      */
-    public String cancelar(String motivo) {
+    public String cancelar(String motivo) throws OperacaoInvalidaException {
         cancelar();
         return "Consulta cancelada. Motivo: " + motivo;
     }
@@ -128,13 +128,13 @@ public class Consulta implements Agendavel, Exportavel {
      * (ver ClinicaServico/Main), conforme a jornada de remarcação.
      */
     @Override
-    public void remarcar(String novaData, String novoHorario) {
+    public void remarcar(String novaData, String novoHorario) throws OperacaoInvalidaException {
 
         if ("cancelada".equals(status)) {
-            throw new IllegalStateException("Consulta cancelada não pode ser remarcada");
+            throw new OperacaoInvalidaException("Consulta cancelada não pode ser remarcada");
         }
         if ("concluida".equals(status)) {
-            throw new IllegalStateException("Consulta já realizada não pode ser remarcada");
+            throw new OperacaoInvalidaException("Consulta já realizada não pode ser remarcada");
         }
 
         this.status = "remarcada";
@@ -143,9 +143,9 @@ public class Consulta implements Agendavel, Exportavel {
     /**
      * Marca a consulta como concluída (atendimento realizado).
      */
-    public void concluir() {
+    public void concluir() throws OperacaoInvalidaException {
         if ("cancelada".equals(status)) {
-            throw new IllegalStateException("Consulta cancelada não pode ser concluída");
+            throw new OperacaoInvalidaException("Consulta cancelada não pode ser concluída");
         }
         this.status = "concluida";
     }

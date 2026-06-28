@@ -77,6 +77,64 @@ public class Relatorio {
         System.out.println("Total em multas: R$" + Math.round(totalEmMultas * 100.0) / 100.0);
     }
 
+    /**
+     * Relatório unificado de cadastros: percorre uma única List<Pessoa>
+     * (pacientes e profissionais juntos) e chama exibirResumo() em cada
+     * elemento.
+     *
+     * LIGAÇÃO DINÂMICA: exibirResumo() executa a versão certa (Paciente,
+     * Fisioterapeuta, Psicologo, Nutricionista ou ClinicoGeral) decidida em
+     * tempo de execução, mesmo a lista sendo declarada apenas como Pessoa.
+     *
+     * DYNAMIC CASTING: usamos instanceof para identificar a categoria real de
+     * cada Pessoa e, quando é um Profissional, fazemos o cast seguro para
+     * contar também a especialidade — sem esse cast não teríamos acesso a
+     * getEspecialidade(), que não existe em Pessoa.
+     */
+    public static void gerarRelatorioUnificado(List<Pessoa> pessoas) {
+
+        System.out.println("\n=== RELATORIO UNIFICADO DE CADASTROS ===");
+
+        int totalPacientes = 0;
+        int totalProfissionais = 0;
+        int totalFisioterapeutas = 0;
+        int totalPsicologos = 0;
+        int totalNutricionistas = 0;
+        int totalClinicosGerais = 0;
+
+        for (Pessoa pessoa : pessoas) {
+
+            System.out.println(pessoa.exibirResumo());
+            System.out.println("---");
+
+            if (pessoa instanceof Paciente) {
+                totalPacientes++;
+
+            } else if (pessoa instanceof Profissional) {
+                totalProfissionais++;
+
+                // Dynamic casting: só depois de confirmar com instanceof é que
+                // fazemos o cast para a subclasse específica.
+                if (pessoa instanceof Fisioterapeuta) {
+                    totalFisioterapeutas++;
+                } else if (pessoa instanceof Psicologo) {
+                    totalPsicologos++;
+                } else if (pessoa instanceof Nutricionista) {
+                    totalNutricionistas++;
+                } else if (pessoa instanceof ClinicoGeral) {
+                    totalClinicosGerais++;
+                }
+            }
+        }
+
+        System.out.println("\nTotal de pacientes: " + totalPacientes);
+        System.out.println("Total de profissionais: " + totalProfissionais);
+        System.out.println("  Fisioterapeutas: " + totalFisioterapeutas);
+        System.out.println("  Psicologos: " + totalPsicologos);
+        System.out.println("  Nutricionistas: " + totalNutricionistas);
+        System.out.println("  Clinicos gerais: " + totalClinicosGerais);
+    }
+
     // imprime a consulta e, se houver, o diagnostico do atendimento ligado a ela
     private static void imprimirConsultaComDiagnostico(Consulta consulta, List<Atendimento> atendimentos) {
 
