@@ -1,71 +1,46 @@
-public class Pagamento {
-    private int indiceConsulta;
-    private double valorFinal;
-    private String tipoPagamento;
-    private int parcelas;
+public abstract class Pagamento implements Exportavel {
 
-    public int getIndiceConsulta(){
+    private int indiceConsulta;
+    private double valorBase;
+
+    protected Pagamento(int indiceConsulta, double valorBase) {
+        this.indiceConsulta = indiceConsulta;
+        this.valorBase = valorBase;
+    }
+
+    public int getIndiceConsulta() {
         return indiceConsulta;
     }
-    public double getValorFinal(){
-        return valorFinal;
-    }
-    public String getTipoPagamento(){
-        return tipoPagamento;
-    }
-    public int getParcelas(){
-        return parcelas;
-    }
 
-    public Pagamento(int indiceConsulta, double valorFinal, String tipoPagamento) {
-        this.indiceConsulta = indiceConsulta;
-        this.valorFinal = valorFinal;
-        this.tipoPagamento = tipoPagamento;
-        this.parcelas = 1;
-    }
-
-    // com parcelas (so pra cartao)
-    public Pagamento(int indiceConsulta, double valorFinal, String tipoPagamento, int parcelas) {
-        this.indiceConsulta = indiceConsulta;
-        this.valorFinal = valorFinal;
-        this.tipoPagamento = tipoPagamento;
-        this.parcelas = parcelas;
-    }
-
-    // sem desconto nenhum
-    public static double calcularValor(double valorBase) {
+    public double getValorBase() {
         return valorBase;
     }
 
-    // com desconto em percentual
-    public static double calcularValor(double valorBase, double percentualDesconto) {
-        double desconto = valorBase * percentualDesconto / 100;
-        double valor = valorBase - desconto;
-        if (valor < 0) {
-            valor = 0;
-        }
-        return valor;
-    }
+    /**
+     * Cada forma de pagamento calcula o valor final de um jeito diferente
+     * (desconto fixo, taxa de parcelamento, cobertura de convênio).
+     */
+    public abstract double calcularValorFinal();
 
-    // com desconto e multa somada
-    public static double calcularValor(double valorBase, double percentualDesconto, double multa) {
-        double desconto = valorBase * percentualDesconto / 100;
-        double valor = valorBase - desconto + multa;
-        if (valor < 0) {
-            valor = 0;
-        }
-        return valor;
-    }
-
+    // Método concreto comum: todas as subclasses usam o mesmo formato de exibição,
+    // só o cálculo do valor final é que muda (polimorfismo).
     public String exibirResumo() {
-        // arredonda pra 2 casas
-        double valorArredondado = Math.round(valorFinal * 100.0) / 100.0;
-        String resumo = "Consulta #" + indiceConsulta + " | Valor: R$" + valorArredondado
-                + " | Tipo: " + tipoPagamento + " | Parcelas: " + parcelas;
-        if (parcelas > 1) {
-            double valorParcela = Math.round((valorFinal / parcelas) * 100.0) / 100.0;
-            resumo = resumo + " (R$" + valorParcela + " cada)";
-        }
-        return resumo;
+        double valorArredondado = Math.round(calcularValorFinal() * 100.0) / 100.0;
+        return "Consulta #" + indiceConsulta
+                + " | Valor: R$" + valorArredondado
+                + " | Tipo: " + getTipoDescricao();
+    }
+
+    protected abstract String getTipoDescricao();
+
+    @Override
+    public String exportarDados() {
+        double valorArredondado = Math.round(calcularValorFinal() * 100.0) / 100.0;
+        return "Pagamento{" +
+                "indiceConsulta=" + indiceConsulta +
+                ", valorBase=" + valorBase +
+                ", valorFinal=" + valorArredondado +
+                ", tipo='" + getTipoDescricao() + '\'' +
+                '}';
     }
 }
