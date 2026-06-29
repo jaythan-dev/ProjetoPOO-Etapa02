@@ -31,8 +31,4 @@ public class Nutricionista extends Profissional {
     public String exibirResumo() {
         return super.exibirResumo() + " | Plano alimentar: " + planoAlimentar;
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 206b5a265d560a31c7494c378367c79c7a23af23
