@@ -1,0 +1,209 @@
+DIAGRAMA DE CLASSES - CLINICA VIDAPLENA
+
+==============================================================================
+
+==============================================================================
+BLOCO 1 - HIERARQUIA DE PESSOAS (heranca, 3 niveis)
+==============================================================================
+
+    +--------------------------------------+
+    |             <<abstract>>             |
+    |                Pessoa                |
+    +--------------------------------------+
+    | - nome: String                       |
+    | - cpf: String                        |
+    | - telefone: String                   |
+    +--------------------------------------+
+    | + exibirResumo(): String  {abstract} |
+    +--------------------------------------+
+
+                       |
+                       /^\  <|--  heranca (Paciente e Profissional sao Pessoa)
+                       |
+
+    +----------------------+          +------------------------------------------------+
+    |       Paciente       |          |                  <<abstract>>                  |
+    +----------------------+          |                  Profissional                  |
+    | - idade: int         |          +------------------------------------------------+
+    | - convenio: Convenio |          | - especialidade: String                        |
+    | - ativo: boolean     |          | - valorConsulta: double                        |
+    +----------------------+          | - horariosDisponiveis: List<HorarioDisponivel> |
+    | + isAtivo(): boolean |          +------------------------------------------------+
+    | + desativar()        |          | + atendeNoDiaETurno(): boolean                 |
+    +----------------------+          | + registrarEspecifico(Atendimento)  {abstract} |
+                                      +------------------------------------------------+
+
+                                                              |
+                                                              /^\  <|--  heranca (as 4 especialidades sao Profissional)
+                                                              |
+
+    +------------------------------+    +---------------------+    +--------------------------+    +--------------------------+
+    |        Fisioterapeuta        |    |      Psicologo      |    |      Nutricionista       |    |       ClinicoGeral       |
+    +------------------------------+    +---------------------+    +--------------------------+    +--------------------------+
+    | - totalSessoesPrevistas: int |    | - abordagem: String |    | - planoAlimentar: String |    | - encaminhamento: String |
+    +------------------------------+    +---------------------+    +--------------------------+    +--------------------------+
+
+    Legenda desta secao:  <|--  heranca (extends)
+
+
+==============================================================================
+BLOCO 2 - ASSOCIACAO E AGREGACAO
+==============================================================================
+
+    +----------------------+        +----------------------------------------+
+    |       Paciente       |        |                Convenio                |
+    +----------------------+        +----------------------------------------+
+    | - convenio: Convenio |        | - nome: String                         |
+    +----------------------+        | - percentualCobertura: double          |
+                                    | - especialidadesCobertas: List<String> |
+                                    +----------------------------------------+
+                                    | + cobre(String): boolean               |
+                                    +----------------------------------------+
+
+    Paciente (1)  ---------->  (0..1) Convenio      [ASSOCIACAO]
+    Paciente conhece Convenio; ambos existem independentemente.
+
+
+    +------------------------------------------------+        +---------------------+
+    |                  Profissional                  |        |  HorarioDisponivel  |
+    +------------------------------------------------+        +---------------------+
+    | - horariosDisponiveis: List<HorarioDisponivel> |        | - diaSemana: String |
+    +------------------------------------------------+        | - turno: String     |
+                                                              +---------------------+
+
+    Profissional (1)  o--------->  (0..*) HorarioDisponivel   [AGREGACAO]
+    Profissional possui horarios, mas eles sobrevivem independentemente dele.
+
+    Legenda desta secao:  -->  associacao   |   o--  agregacao
+
+
+==============================================================================
+BLOCO 3 - CONSULTA, ATENDIMENTO, PRONTUARIO E INTERFACES
+==============================================================================
+
+    +----------------------------+          +---------------------------+
+    |       <<interface>>        |          |       <<interface>>       |
+    |         Agendavel          |          |        Exportavel         |
+    +----------------------------+          +---------------------------+
+    | + agendar()                |          | + exportarDados(): String |
+    | + cancelar()               |          +---------------------------+
+    | + remarcar(String, String) |                                       
+    +----------------------------+                                       
+
+                   ^ <|.. implementa                      ^ <|.. implementa
+                   |                                      |              
+                   +------------------+-------------------+              
+                                      |                                  
+                  +---------------------------------------+
+                  |               Consulta                |
+                  +---------------------------------------+
+                  | - status: String                      |
+                  | - tipo: String                        |
+                  +---------------------------------------+
+                  | + agendar() / cancelar() / remarcar() |
+                  | + exportarDados(): String             |
+                  +---------------------------------------+
+
+    Consulta implementa Agendavel E Exportavel simultaneamente
+    (heranca multipla de TIPO, via interfaces).
+
+    Exportavel tambem e implementado por Atendimento e por Pagamento
+    (ver Bloco 4) -- 3 classes diferentes para o mesmo contrato.
+
+    +---------------------------+        +-------------------------------+
+    |        Atendimento        |        |          Prontuario           |
+    +---------------------------+        +-------------------------------+
+    | + exportarDados(): String |        | - observacoes: String         |
+    +---------------------------+        | - diagnostico: String         |
+                                         | - procedimentos: List<String> |
+                                         +-------------------------------+
+
+    Atendimento (1)  *-------->  (1) Prontuario      [COMPOSICAO]
+    Prontuario nasce e morre junto com o Atendimento
+    (construtor de Prontuario e package-private).
+
+    Atendimento --------> Consulta   (referencia)
+
+    Legenda desta secao:  <|..  implementa interface   |   *--  composicao
+
+
+==============================================================================
+BLOCO 4 - HIERARQUIA DE PAGAMENTO (polimorfismo)
+==============================================================================
+
+    +--------------------------------------------+
+    |                <<abstract>>                |
+    |                 Pagamento                  |
+    +--------------------------------------------+
+    | - indiceConsulta: int                      |
+    | - valorBase: double                        |
+    +--------------------------------------------+
+    | + calcularValorFinal(): double  {abstract} |
+    | + exportarDados(): String                  |
+    +--------------------------------------------+
+
+                          |
+                          /^\  <|--  heranca (as 3 formas de pagamento sao Pagamento)
+                          |
+
+    +------------------------+    +--------------------------+    +---------------------------+
+    |   PagamentoDinheiro    |    |     PagamentoCartao      |    |     PagamentoConvenio     |
+    +------------------------+    +--------------------------+    +---------------------------+
+    | + calcularValorFinal() |    | - parcelas: int          |    | - convenio: Convenio      |
+    |   5% de desconto fixo  |    +--------------------------+    +---------------------------+
+    +------------------------+    | + calcularValorFinal()   |    | + calcularValorFinal()    |
+                                  |   taxa 2,5%/parcela > 3x |    |   % cobertura do Convenio |
+                                  +--------------------------+    +---------------------------+
+
+    PagamentoConvenio ------> Convenio   (usa)
+
+    Cada subclasse calcula calcularValorFinal() de forma DIFERENTE.
+    Uma List<Pagamento> percorrida chama, para cada item, a versao REAL
+    do metodo (LIGACAO DINAMICA), decidida em tempo de execucao.
+
+    Legenda desta secao:  <|--  heranca (extends)
+
+
+==============================================================================
+BLOCO 5 - CLINICASERVICO E EXCECOES PERSONALIZADAS
+==============================================================================
+
+    +--------------------------------------------------+
+    |                  ClinicaServico                  |
+    +--------------------------------------------------+
+    | - pacientesPorCpf: Map<String,Paciente>          |
+    | - profissionaisPorNome: Map<String,Profissional> |
+    | - consultas: List<Consulta>                      |
+    | - atendimentos: List<Atendimento>                |
+    | - pagamentos: List<Pagamento>                    |
+    | - cpfsCadastrados: Set<String>                   |
+    +--------------------------------------------------+
+    | + agendarConsulta(Consulta)                      |
+    | + cancelarConsulta(int)                          |
+    | + registrarAtendimento(Atendimento)              |
+    | + registrarPagamento(Pagamento)                  |
+    | + listarTodasPessoas(): List<Pessoa>             |
+    +--------------------------------------------------+
+
+    ClinicaServico ------> Paciente, Profissional, Consulta,
+                              Atendimento, Pagamento   (associacao)
+
+    +----------------------------------------------+
+    | Excecoes personalizadas  (extends Exception) |
+    +----------------------------------------------+
+    | PacienteNaoEncontradoException               |
+    | PacienteInativoException                     |
+    | ProfissionalNaoEncontradoException           |
+    | HorarioIndisponivelException                 |
+    | ConsultaNaoEncontradaException               |
+    | OperacaoInvalidaException                    |
+    | PagamentoInvalidoException                   |
+    | ConvenioNaoCobreException                    |
+    |                                              |
+    | (cada uma com 2 construtores:                |
+    |  mensagem; mensagem + causa)                 |
+    +----------------------------------------------+
+
+    ClinicaServico ......> Excecoes personalizadas   (lanca / ..>)
+
+    Legenda desta secao:  -->  associacao   |   ..>  dependencia (lanca)
